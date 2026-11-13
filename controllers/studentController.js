@@ -114,6 +114,85 @@ const deleteStudent = (req, res) => {
   });
 };
 
+const searchStudents = (req, res) => {
+  let results = [...students];
+
+  const { name, email, status, course, gpa } = req.query;
+
+  // Search by name
+  if (name) {
+    results = results.filter((student) =>
+      student.name.toLowerCase().includes(name.toLowerCase()),
+    );
+  }
+
+  // Search by email
+  if (email) {
+    results = results.filter((student) =>
+      student.email.toLowerCase().includes(email.toLowerCase()),
+    );
+  }
+
+  // Filter by status
+  if (status) {
+    results = results.filter(
+      (student) => student.status.toLowerCase() === status.toLowerCase(),
+    );
+  }
+
+  // Filter by course
+  if (course) {
+    results = results.filter((student) =>
+      student.course.toLowerCase().includes(course.toLowerCase()),
+    );
+  }
+
+  // Filter by exact GPA
+  if (gpa !== undefined) {
+    const gpaValue = Number(gpa);
+
+    if (Number.isNaN(gpaValue) || gpaValue < 0 || gpaValue > 4) {
+      return res.status(400).json({
+        success: false,
+        message: "GPA must be a number between 0 and 4",
+      });
+    }
+
+    results = results.filter((student) => student.gpa === gpaValue);
+  }
+
+  res.status(200).json({
+    success: true,
+    count: results.length,
+    data: results,
+  });
+};
+
+const getStudentStats = (req, res) => {
+  const totalStudents = students.length;
+
+  // Calculate average GPA
+  const totalGPA = students.reduce((sum, student) => sum + student.gpa, 0);
+
+  const averageGPA =
+    totalStudents > 0 ? Number((totalGPA / totalStudents).toFixed(2)) : 0;
+
+  // Count students by course
+  const studentsByCourse = students.reduce((counts, student) => {
+    counts[student.course] = (counts[student.course] || 0) + 1;
+    return counts;
+  }, {});
+
+  res.status(200).json({
+    success: true,
+    data: {
+      totalStudents,
+      averageGPA,
+      studentsByCourse,
+    },
+  });
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
@@ -121,4 +200,6 @@ module.exports = {
   updateStudent,
   patchStudent,
   deleteStudent,
+  searchStudents,
+  getStudentStats,
 };
